@@ -305,7 +305,6 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
             scrapHeight = getDecoratedMeasuredHeight(scrap);
             int gamma = Math.min((startPosition - i + 1), (scaleCount - 1) / 2);
             float spacing = (float) Math.pow(scaleRatio, gamma);
-            Log.e("darkwh", "position " + i + " spacing is " + spacing);
             scrap.setScaleX(spacing);
             scrap.setScaleY(spacing);
             topOffset = (int) (getPaddingTop() + (height - scrapHeight * spacing) / 2.0f);
@@ -346,7 +345,6 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
 
             int gamma = Math.min((i - startPosition + 1), (scaleCount - 1) / 2);
             float spacing = (float) Math.pow(scaleRatio, gamma);
-            Log.e("darkwh", "position " + i + " spacing is " + spacing);
             scrap.setScaleX(spacing);
             scrap.setScaleY(spacing);
             topOffset = (int) (getPaddingTop() + (height - scrapHeight * spacing) / 2.0f);
@@ -609,16 +607,14 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         //确定recyclerview右边缘的位置
         int rightEdge = getOrientationHelper().getEndAfterPadding();
         //中心item到两边最近的item的偏移量
-//        int offetOneFromCenter = (int) (mCenterItemWidth / 2 + itemSpacing/2 + mCenterItemWidth * scaleRatio);
-        int offetOneFromCenter = (int) (mCenterItemWidth + itemSpacing);
+        int offetOneFromCenter = mCenterItemWidth + itemSpacing;
         //根据mCurSelectedPosition先绘制中间item(中间item此时可能也处于偏移状态)
         int offsetDx = Math.abs(dx) % offetOneFromCenter;
-
         int topOffset;
         int scrapWidth, scrapHeight;
         int height = getVerticalSpace();
         Rect scrapRect;
-        float spacing = 1f;
+        float spacing;
         if (dx > 0) {
             //从右向左滑
             spacing = 1f - (1f - scaleRatio) * offsetDx / (float) offetOneFromCenter;
@@ -639,11 +635,63 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
                     (scrapWidth * (1 - spacing) / 2));
             scrapRect.set(rightPosition - scrapWidth, topPosition, rightPosition, topPosition + scrapHeight);
             layoutDecorated(scrap, scrapRect.left, scrapRect.top, scrapRect.right, scrapRect.bottom);
+            //画左面
+            fillLeftTest(recycler, mCurSelectedPosition,
+                    (int) (rightPosition - scrapWidth + scrapWidth * (1f - spacing) / 2),
+                    leftEdge, dx);
+            //画右面
+            fillRightTest();
         } else {
 
         }
     }
 
+    /**
+     * 动态绘制左侧view
+     */
+    private void fillLeftTest(RecyclerView.Recycler recycler, int startPosition, int startOffset, int leftEdge, int dx) {
+        View scrap;
+        int topOffset;
+        int scrapWidth, scrapHeight;
+        Rect scrapRect = new Rect();
+        int height = getVerticalSpace();
+        int offetOneFromCenter = mCenterItemWidth + itemSpacing;
+        for (int i = startPosition; i >= 0 && startOffset > leftEdge; i--) {
+            int gamma = Math.min((startPosition - i + 1), (scaleCount - 1) / 2);
+            float tempScale = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
+                    Math.pow(scaleRatio, (float) gamma));
+            float preSpacing = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
+                    Math.pow(scaleRatio, gamma + 1));
+            scrap = recycler.getViewForPosition(i);
+            addView(scrap, 0);
+            measureChildWithMargins(scrap, 0, 0);
+            scrapWidth = getDecoratedMeasuredWidth(scrap);
+            scrapHeight = getDecoratedMeasuredHeight(scrap);
+            int offsetDx = Math.abs(dx) % offetOneFromCenter;
+            float spacing = tempScale - (tempScale - preSpacing) * offsetDx / (float) offetOneFromCenter;
+            scrap.setScaleX(spacing);
+            scrap.setScaleY(spacing);
+            topOffset = (int) (getPaddingTop() + (height - scrapHeight * spacing) / 2.0f);
+            int topPosition = (int) (topOffset - scrapHeight * (1 - spacing) / 2.0f);
+            int rightPosition = (int) (startOffset - (itemSpacing - scrapWidth * (1 - spacing) / 2));
+            scrapRect.set(rightPosition - scrapWidth, topPosition, rightPosition, topPosition + scrapHeight);
+            startOffset = (int) (startOffset - scrapWidth * spacing - itemSpacing);
+            layoutDecorated(scrap, scrapRect.left, scrapRect.top, scrapRect.right, scrapRect.bottom);
+            mFirstVisiblePosition = i;
+            if (getState().mItemsFrames.get(i) == null) {
+                getState().mItemsFrames.put(i, scrapRect);
+            } else {
+                getState().mItemsFrames.get(i).set(scrapRect);
+            }
+        }
+    }
+
+    /**
+     * 动态绘制右侧view
+     */
+    private void fillRightTest() {
+
+    }
 
     /**
      * @param recycler
@@ -1051,7 +1099,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
             View snap = mSnapHelper.findSnapView(recyclerView.getLayoutManager());
             if (snap != null) {
                 int selectedPosition = recyclerView.getLayoutManager().getPosition(snap);
-                Log.e("darkwh", "onScrolled  selectedPosition is ----->" + selectedPosition);
+//                Log.e("darkwh", "onScrolled  selectedPosition is ----->" + selectedPosition);
                 if (selectedPosition != mCurSelectedPosition) {
                     if (mCurSelectedView != null) {
                         mCurSelectedView.setSelected(false);
