@@ -610,6 +610,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         //根据mCurSelectedPosition先绘制中间item(中间item此时可能也处于偏移状态)
         int offsetDx = Math.abs(dx) % offetOneFromCenter;
 
+
         int topOffset;
         int scrapWidth, scrapHeight;
         int height = getVerticalSpace();
@@ -636,9 +637,9 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
             scrapRect.set(rightPosition - scrapWidth, topPosition, rightPosition, topPosition + scrapHeight);
             layoutDecorated(scrap, scrapRect.left, scrapRect.top, scrapRect.right, scrapRect.bottom);
             //画左面
-            fillLeftTest(recycler, mCurSelectedPosition - 1,
-                    (int) (rightPosition - scrapWidth + scrapWidth * (1f - spacing) / 2),
-                    leftEdge, dx);
+//            fillLeftTest(recycler, mCurSelectedPosition - 1,
+//                    (int) (rightPosition - scrapWidth + scrapWidth * (1f - spacing) / 2),
+//                    leftEdge, dx);
             //画右面
             fillRightTest(recycler, mCurSelectedPosition + 1,
                     (int) (rightPosition - scrapWidth * (1f - spacing) / 2),
@@ -699,7 +700,14 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         int height = getVerticalSpace();
         int offetOneFromCenter = mCenterItemWidth + itemSpacing;
         for (int i = startPosition; i < getItemCount() && startOffset < rightEdge; i++) {
-            int gamma = Math.min((i - startPosition + 1), (scaleCount - 1) / 2);
+
+//            int gamma = Math.min((startPosition - i + 1), (scaleCount - 1) / 2);
+//            float tempScale = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
+//                    Math.pow(scaleRatio, (float) gamma));
+//            float preSpacing = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
+//                    Math.pow(scaleRatio, gamma + 1));
+
+            int gamma = i - startPosition + 1;
             float tempScale = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
                     Math.pow(scaleRatio, (float) gamma));
             float nextSpacing = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
@@ -1112,7 +1120,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         mRecyclerView = recyclerView;
         mInitialSelectedPosition = Math.max(0, selectedPosition);
         recyclerView.setLayoutManager(this);
-//        mSnapHelper.attachToRecyclerView(recyclerView);
+        mSnapHelper.attachToRecyclerView(recyclerView);
         recyclerView.addOnScrollListener(mInnerScrollListener);
     }
 
