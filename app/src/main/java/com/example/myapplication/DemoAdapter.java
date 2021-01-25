@@ -23,7 +23,7 @@ public class DemoAdapter extends RecyclerView.Adapter {
 
     @Override
     public int getItemCount() {
-        return 20;
+        return 40;
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder{

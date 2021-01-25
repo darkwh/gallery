@@ -14,8 +14,6 @@ import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.OrientationHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.myapplication.BuildConfig;
-
 import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE;
 
 public class GalleryLayoutManager11 extends RecyclerView.LayoutManager implements RecyclerView.SmoothScroller.ScrollVectorProvider {
@@ -436,8 +434,8 @@ public class GalleryLayoutManager11 extends RecyclerView.LayoutManager implement
         }
 
         if (mOrientation == HORIZONTAL) {
-//            fillWithHorizontal(recycler, state, scrollDelta);
-            fillHorizontalTest(recycler, state, scrollDelta);
+            fillWithHorizontal(recycler, state, scrollDelta);
+//            fillHorizontalTest(recycler, state, scrollDelta);
         } else {
             fillWithVertical(recycler, state, scrollDelta);
         }
@@ -1013,6 +1011,7 @@ public class GalleryLayoutManager11 extends RecyclerView.LayoutManager implement
             View snap = mSnapHelper.findSnapView(recyclerView.getLayoutManager());
             if (snap != null) {
                 int selectedPosition = recyclerView.getLayoutManager().getPosition(snap);
+                Log.e("darkwh", "onScrolled  selectedPosition is ----->" + selectedPosition);
                 if (selectedPosition != mCurSelectedPosition) {
                     if (mCurSelectedView != null) {
                         mCurSelectedView.setSelected(false);

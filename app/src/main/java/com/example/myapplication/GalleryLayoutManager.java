@@ -619,7 +619,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         int height = getVerticalSpace();
         Rect scrapRect;
         float spacing = 1f;
-        if (dx < 0) {
+        if (dx > 0) {
             //从右向左滑
             spacing = 1f - (1f - scaleRatio) * offsetDx / (float) offetOneFromCenter;
             scrapRect = getState().mItemsFrames.get(mCurSelectedPosition);
@@ -635,7 +635,8 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
             }
             topOffset = (int) (getPaddingTop() + (height - scrapHeight * spacing) / 2.0f);
             int topPosition = (int) (topOffset - scrapHeight * (1 - spacing) / 2.0f);
-            int rightPosition = (int) (parentCenter + mCenterItemWidth / 2 - offsetDx - (itemSpacing - scrapWidth * (1 - spacing) / 2));
+            int rightPosition = (int) (parentCenter + mCenterItemWidth / 2 - offsetDx +
+                    (scrapWidth * (1 - spacing) / 2));
             scrapRect.set(rightPosition - scrapWidth, topPosition, rightPosition, topPosition + scrapHeight);
             layoutDecorated(scrap, scrapRect.left, scrapRect.top, scrapRect.right, scrapRect.bottom);
         } else {
@@ -884,7 +885,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         }
         //记录从第一次layout之后的滑动距离
         getState().mScrollDelta += -delta;
-        Log.e("darkwh", "mScrollDelta is " + getState().mScrollDelta);
+//        Log.e("darkwh", "mScrollDelta is " + getState().mScrollDelta);
         //填充画面(重新layout子view)
         fillCover(recycler, state, -delta);
         //将所有view整体进行水平平移
@@ -1050,6 +1051,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
             View snap = mSnapHelper.findSnapView(recyclerView.getLayoutManager());
             if (snap != null) {
                 int selectedPosition = recyclerView.getLayoutManager().getPosition(snap);
+                Log.e("darkwh", "onScrolled  selectedPosition is ----->" + selectedPosition);
                 if (selectedPosition != mCurSelectedPosition) {
                     if (mCurSelectedView != null) {
                         mCurSelectedView.setSelected(false);
