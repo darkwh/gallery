@@ -4,8 +4,10 @@
     android:layout_height="180dp"
     android:background="@color/colorPrimary">
     <TextView
+        android:id="@+id/item_id"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@android:color/white"
         android:text="123456789012345678901234567890"/>
 
 </RelativeLayout>

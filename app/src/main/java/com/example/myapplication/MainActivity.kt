@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity() {
         val layoutManager = GalleryLayoutManager(GalleryLayoutManager.HORIZONTAL)
         //layoutManager.attach(mPagerRecycleView);  default selected position is 0
         //layoutManager.attach(mPagerRecycleView);  default selected position is 0
-        layoutManager.attach(rv_demo, 5)
+        layoutManager.attach(rv_demo, 8)
         //设置滑动缩放效果
 
         //设置滑动缩放效果

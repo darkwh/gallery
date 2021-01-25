@@ -14,8 +14,6 @@ import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.OrientationHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
-import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE;
-
 public class GalleryLayoutManager extends RecyclerView.LayoutManager implements RecyclerView.SmoothScroller.ScrollVectorProvider {
     //item间距
     private int itemSpacing = 20;
@@ -178,6 +176,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
 //            }
 //        }
         //首次填充后主动调用一次Scrolled
+        mCurSelectedPosition = mInitialSelectedPosition;
         mInnerScrollListener.onScrolled(mRecyclerView, 0, 0);
     }
 
@@ -610,6 +609,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         int offetOneFromCenter = mCenterItemWidth + itemSpacing;
         //根据mCurSelectedPosition先绘制中间item(中间item此时可能也处于偏移状态)
         int offsetDx = Math.abs(dx) % offetOneFromCenter;
+
         int topOffset;
         int scrapWidth, scrapHeight;
         int height = getVerticalSpace();
@@ -636,11 +636,13 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
             scrapRect.set(rightPosition - scrapWidth, topPosition, rightPosition, topPosition + scrapHeight);
             layoutDecorated(scrap, scrapRect.left, scrapRect.top, scrapRect.right, scrapRect.bottom);
             //画左面
-            fillLeftTest(recycler, mCurSelectedPosition,
+            fillLeftTest(recycler, mCurSelectedPosition - 1,
                     (int) (rightPosition - scrapWidth + scrapWidth * (1f - spacing) / 2),
                     leftEdge, dx);
             //画右面
-            fillRightTest();
+            fillRightTest(recycler, mCurSelectedPosition + 1,
+                    (int) (rightPosition - scrapWidth * (1f - spacing) / 2),
+                    rightEdge, dx);
         } else {
 
         }
@@ -689,8 +691,45 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
     /**
      * 动态绘制右侧view
      */
-    private void fillRightTest() {
+    private void fillRightTest(RecyclerView.Recycler recycler, int startPosition, int startOffset, int rightEdge, int dx) {
+        View scrap;
+        int topOffset;
+        int scrapWidth, scrapHeight;
+        Rect scrapRect = new Rect();
+        int height = getVerticalSpace();
+        int offetOneFromCenter = mCenterItemWidth + itemSpacing;
+        for (int i = startPosition; i < getItemCount() && startOffset < rightEdge; i++) {
+            int gamma = Math.min((i - startPosition + 1), (scaleCount - 1) / 2);
+            float tempScale = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
+                    Math.pow(scaleRatio, (float) gamma));
+            float nextSpacing = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
+                    Math.pow(scaleRatio, gamma + 1));
+            scrap = recycler.getViewForPosition(i);
+            addView(scrap);
+            measureChildWithMargins(scrap, 0, 0);
+            scrapWidth = getDecoratedMeasuredWidth(scrap);
+            scrapHeight = getDecoratedMeasuredHeight(scrap);
+            int offsetDx = Math.abs(dx) % offetOneFromCenter;
+            float spacing = tempScale + (tempScale - nextSpacing) * offsetDx / (float) offetOneFromCenter;
+            scrap.setScaleX(spacing);
+            scrap.setScaleY(spacing);
+            topOffset = (int) (getPaddingTop() + (height - scrapHeight * spacing) / 2.0f);
+            int topPosition = (int) (topOffset - scrapHeight * (1 - spacing) / 2.0f);
 
+            //butaiwen
+            int leftPosition = (int) (startOffset + (itemSpacing - scrapWidth * (1 - spacing) / 2));
+            scrapRect.set(leftPosition, topPosition, leftPosition + scrapWidth, topPosition + scrapHeight);
+            //bijiaowen
+            startOffset = (int) (startOffset + scrapWidth * spacing + itemSpacing);
+
+            layoutDecorated(scrap, scrapRect.left, scrapRect.top, scrapRect.right, scrapRect.bottom);
+            mLastVisiblePos = i;
+            if (getState().mItemsFrames.get(i) == null) {
+                getState().mItemsFrames.put(i, scrapRect);
+            } else {
+                getState().mItemsFrames.get(i).set(scrapRect);
+            }
+        }
     }
 
     /**
@@ -1096,65 +1135,65 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         @Override
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
-            View snap = mSnapHelper.findSnapView(recyclerView.getLayoutManager());
-            if (snap != null) {
-                int selectedPosition = recyclerView.getLayoutManager().getPosition(snap);
+//            View snap = mSnapHelper.findSnapView(recyclerView.getLayoutManager());
+//            if (snap != null) {
+//                int selectedPosition = recyclerView.getLayoutManager().getPosition(snap);
 //                Log.e("darkwh", "onScrolled  selectedPosition is ----->" + selectedPosition);
-                if (selectedPosition != mCurSelectedPosition) {
-                    if (mCurSelectedView != null) {
-                        mCurSelectedView.setSelected(false);
-                    }
-                    mCurSelectedView = snap;
-                    mCurSelectedView.setSelected(true);
-                    mCurSelectedPosition = selectedPosition;
-                    Log.e("darkwh", "onScrolled   mCurSelectedPosition is" + mCurSelectedPosition);
-                    if (!mCallbackInFling && mState != SCROLL_STATE_IDLE) {
-                        if (BuildConfig.DEBUG) {
-                            Log.v(TAG, "ignore selection change callback when fling ");
-                        }
-                        mCallbackOnIdle = true;
-                        return;
-                    }
-                    if (mOnItemSelectedListener != null) {
-                        mOnItemSelectedListener.onItemSelected(recyclerView, snap, mCurSelectedPosition);
-                    }
-                }
-            }
-            if (BuildConfig.DEBUG) {
-                Log.v(TAG, "onScrolled: dx:" + dx + ",dy:" + dy);
-            }
+//                if (selectedPosition != mCurSelectedPosition) {
+//                    if (mCurSelectedView != null) {
+//                        mCurSelectedView.setSelected(false);
+//                    }
+//                    mCurSelectedView = snap;
+//                    mCurSelectedView.setSelected(true);
+//                    mCurSelectedPosition = selectedPosition;
+//                    Log.e("darkwh", "onScrolled   mCurSelectedPosition is" + mCurSelectedPosition);
+//                    if (!mCallbackInFling && mState != SCROLL_STATE_IDLE) {
+//                        if (BuildConfig.DEBUG) {
+//                            Log.v(TAG, "ignore selection change callback when fling ");
+//                        }
+//                        mCallbackOnIdle = true;
+//                        return;
+//                    }
+//                    if (mOnItemSelectedListener != null) {
+//                        mOnItemSelectedListener.onItemSelected(recyclerView, snap, mCurSelectedPosition);
+//                    }
+//                }
+//            }
+//            if (BuildConfig.DEBUG) {
+//                Log.v(TAG, "onScrolled: dx:" + dx + ",dy:" + dy);
+//            }
         }
 
         @Override
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             super.onScrollStateChanged(recyclerView, newState);
-            mState = newState;
-            if (BuildConfig.DEBUG) {
-                Log.v(TAG, "onScrollStateChanged: " + newState);
-            }
-            if (mState == SCROLL_STATE_IDLE) {
-                View snap = mSnapHelper.findSnapView(recyclerView.getLayoutManager());
-                if (snap != null) {
-                    int selectedPosition = recyclerView.getLayoutManager().getPosition(snap);
-                    if (selectedPosition != mCurSelectedPosition) {
-                        if (mCurSelectedView != null) {
-                            mCurSelectedView.setSelected(false);
-                        }
-                        mCurSelectedView = snap;
-                        mCurSelectedView.setSelected(true);
-                        mCurSelectedPosition = selectedPosition;
-                        Log.e("darkwh", "onScrollStateChanged   mCurSelectedPosition is" + mCurSelectedPosition);
-                        if (mOnItemSelectedListener != null) {
-                            mOnItemSelectedListener.onItemSelected(recyclerView, snap, mCurSelectedPosition);
-                        }
-                    } else if (!mCallbackInFling && mOnItemSelectedListener != null && mCallbackOnIdle) {
-                        mCallbackOnIdle = false;
-                        mOnItemSelectedListener.onItemSelected(recyclerView, snap, mCurSelectedPosition);
-                    }
-                } else {
-                    Log.e(TAG, "onScrollStateChanged: snap null");
-                }
-            }
+//            mState = newState;
+//            if (BuildConfig.DEBUG) {
+//                Log.v(TAG, "onScrollStateChanged: " + newState);
+//            }
+//            if (mState == SCROLL_STATE_IDLE) {
+//                View snap = mSnapHelper.findSnapView(recyclerView.getLayoutManager());
+//                if (snap != null) {
+//                    int selectedPosition = recyclerView.getLayoutManager().getPosition(snap);
+//                    if (selectedPosition != mCurSelectedPosition) {
+//                        if (mCurSelectedView != null) {
+//                            mCurSelectedView.setSelected(false);
+//                        }
+//                        mCurSelectedView = snap;
+//                        mCurSelectedView.setSelected(true);
+//                        mCurSelectedPosition = selectedPosition;
+//                        Log.e("darkwh", "onScrollStateChanged   mCurSelectedPosition is" + mCurSelectedPosition);
+//                        if (mOnItemSelectedListener != null) {
+//                            mOnItemSelectedListener.onItemSelected(recyclerView, snap, mCurSelectedPosition);
+//                        }
+//                    } else if (!mCallbackInFling && mOnItemSelectedListener != null && mCallbackOnIdle) {
+//                        mCallbackOnIdle = false;
+//                        mOnItemSelectedListener.onItemSelected(recyclerView, snap, mCurSelectedPosition);
+//                    }
+//                } else {
+//                    Log.e(TAG, "onScrollStateChanged: snap null");
+//                }
+//            }
         }
     }
 
