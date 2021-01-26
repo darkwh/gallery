@@ -616,7 +616,13 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         int height = getVerticalSpace();
         Rect scrapRect;
         float spacing;
+        int beishu = Math.abs(dx) / offetOneFromCenter;
         if (dx > 0) {
+            if ((mInitialSelectedPosition + beishu) < getItemCount()) {
+                mCurSelectedPosition = mInitialSelectedPosition + beishu;
+            } else {
+                mCurSelectedPosition = getItemCount() - 1;
+            }
             //从右向左滑
             spacing = 1f - (1f - scaleRatio) * offsetDx / (float) offetOneFromCenter;
             scrapRect = getState().mItemsFrames.get(mCurSelectedPosition);
@@ -646,6 +652,11 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
                     rightEdge, dx);
         } else {
             //从左向右滑
+            if ((mInitialSelectedPosition - beishu) > 0) {
+                mCurSelectedPosition = mInitialSelectedPosition - beishu;
+            } else {
+                mCurSelectedPosition = 0;
+            }
             spacing = 1f - (1f - scaleRatio) * offsetDx / (float) offetOneFromCenter;
             scrapRect = getState().mItemsFrames.get(mCurSelectedPosition);
             View scrap = recycler.getViewForPosition(mCurSelectedPosition);
@@ -684,18 +695,18 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         int height = getVerticalSpace();
         int offetOneFromCenter = mCenterItemWidth + itemSpacing;
         for (int i = startPosition; i >= 0 && startOffset > leftEdge; i--) {
-            int gamma = Math.min((startPosition - i + 1), (scaleCount - 1) / 2);
+            int gamma = startPosition - i + 1;
             float tempScale = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
-                    Math.pow(scaleRatio, (float) gamma));
+                    Math.pow(scaleRatio, (float) gamma - 1));
             float preSpacing = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
-                    Math.pow(scaleRatio, gamma + 1));
+                    Math.pow(scaleRatio, gamma));
             scrap = recycler.getViewForPosition(i);
             addView(scrap, 0);
             measureChildWithMargins(scrap, 0, 0);
             scrapWidth = getDecoratedMeasuredWidth(scrap);
             scrapHeight = getDecoratedMeasuredHeight(scrap);
             int offsetDx = Math.abs(dx) % offetOneFromCenter;
-            float spacing = tempScale + (tempScale - preSpacing) * offsetDx / (float) offetOneFromCenter;
+            float spacing = preSpacing + (tempScale - preSpacing) * offsetDx / (float) offetOneFromCenter;
             scrap.setScaleX(spacing);
             scrap.setScaleY(spacing);
             topOffset = (int) (getPaddingTop() + (height - scrapHeight * spacing) / 2.0f);
@@ -804,15 +815,15 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
             int gamma = i - startPosition + 1;
             float tempScale = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
                     Math.pow(scaleRatio, (float) gamma));
-            float nextSpacing = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
-                    Math.pow(scaleRatio, gamma + 1));
+            float preSpacing = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
+                    Math.pow(scaleRatio, gamma - 1));
             scrap = recycler.getViewForPosition(i);
             addView(scrap);
             measureChildWithMargins(scrap, 0, 0);
             scrapWidth = getDecoratedMeasuredWidth(scrap);
             scrapHeight = getDecoratedMeasuredHeight(scrap);
             int offsetDx = Math.abs(dx) % offetOneFromCenter;
-            float spacing = tempScale + (tempScale - nextSpacing) * offsetDx / (float) offetOneFromCenter;
+            float spacing = tempScale + (preSpacing - tempScale) * offsetDx / (float) offetOneFromCenter;
             scrap.setScaleX(spacing);
             scrap.setScaleY(spacing);
             topOffset = (int) (getPaddingTop() + (height - scrapHeight * spacing) / 2.0f);

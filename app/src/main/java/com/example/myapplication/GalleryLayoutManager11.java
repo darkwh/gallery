@@ -302,7 +302,6 @@ public class GalleryLayoutManager11 extends RecyclerView.LayoutManager implement
             scrapHeight = getDecoratedMeasuredHeight(scrap);
             int gamma = Math.min((startPosition - i + 1), (scaleCount - 1) / 2);
             float spacing = (float) Math.pow(scaleRatio, gamma);
-            Log.e("darkwh", "position " + i + " spacing is " + spacing);
             scrap.setScaleX(spacing);
             scrap.setScaleY(spacing);
             topOffset = (int) (getPaddingTop() + (height - scrapHeight * spacing) / 2.0f);
@@ -343,7 +342,6 @@ public class GalleryLayoutManager11 extends RecyclerView.LayoutManager implement
 
             int gamma = Math.min((i - startPosition + 1), (scaleCount - 1) / 2);
             float spacing = (float) Math.pow(scaleRatio, gamma);
-            Log.e("darkwh", "position " + i + " spacing is " + spacing);
             scrap.setScaleX(spacing);
             scrap.setScaleY(spacing);
             topOffset = (int) (getPaddingTop() + (height - scrapHeight * spacing) / 2.0f);
@@ -1011,7 +1009,6 @@ public class GalleryLayoutManager11 extends RecyclerView.LayoutManager implement
             View snap = mSnapHelper.findSnapView(recyclerView.getLayoutManager());
             if (snap != null) {
                 int selectedPosition = recyclerView.getLayoutManager().getPosition(snap);
-                Log.e("darkwh", "onScrolled  selectedPosition is ----->" + selectedPosition);
                 if (selectedPosition != mCurSelectedPosition) {
                     if (mCurSelectedView != null) {
                         mCurSelectedView.setSelected(false);
