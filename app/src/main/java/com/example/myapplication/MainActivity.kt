@@ -2,6 +2,7 @@ package com.example.myapplication
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_main.*
 import java.lang.reflect.Field
@@ -32,6 +33,9 @@ class MainActivity : AppCompatActivity() {
         //...
         //setup adapter for your RecycleView
         rv_demo.setAdapter(mAdapter)
+        v_click.setOnClickListener {
+            rv_demo.smoothScrollToPosition(12)
+        }
         setMaxFlingVelocity(rv_demo)
     }
 
