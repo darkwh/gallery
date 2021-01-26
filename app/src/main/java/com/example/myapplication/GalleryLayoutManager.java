@@ -694,7 +694,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         Rect scrapRect = new Rect();
         int height = getVerticalSpace();
         int offetOneFromCenter = mCenterItemWidth + itemSpacing;
-        for (int i = startPosition; i >= 0 && startOffset > leftEdge; i--) {
+        for (int i = startPosition; i >= 0 && startOffset > leftEdge + itemSpacing; i--) {
             int gamma = startPosition - i + 1;
             float tempScale = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
                     Math.pow(scaleRatio, (float) gamma - 1));
@@ -731,7 +731,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         Rect scrapRect = new Rect();
         int height = getVerticalSpace();
         int offetOneFromCenter = mCenterItemWidth + itemSpacing;
-        for (int i = startPosition; i < getItemCount() && startOffset < rightEdge; i++) {
+        for (int i = startPosition; i < getItemCount() && startOffset < rightEdge - itemSpacing; i++) {
             int gamma = i - startPosition + 1;
             float tempScale = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
                     Math.pow(scaleRatio, (float) gamma));
@@ -771,7 +771,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         Rect scrapRect = new Rect();
         int height = getVerticalSpace();
         int offetOneFromCenter = mCenterItemWidth + itemSpacing;
-        for (int i = startPosition; i >= 0 && startOffset > leftEdge; i--) {
+        for (int i = startPosition; i >= 0 && startOffset > leftEdge + itemSpacing; i--) {
             int gamma = Math.min((startPosition - i + 1), (scaleCount - 1) / 2);
             float tempScale = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
                     Math.pow(scaleRatio, (float) gamma));
@@ -811,7 +811,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         Rect scrapRect = new Rect();
         int height = getVerticalSpace();
         int offetOneFromCenter = mCenterItemWidth + itemSpacing;
-        for (int i = startPosition; i < getItemCount() && startOffset < rightEdge; i++) {
+        for (int i = startPosition; i < getItemCount() && startOffset < rightEdge - itemSpacing; i++) {
             int gamma = i - startPosition + 1;
             float tempScale = (float) Math.max(Math.pow(scaleRatio, (scaleCount - 1) / 2f),
                     Math.pow(scaleRatio, (float) gamma));
@@ -1068,6 +1068,9 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
                 child = getChildAt(getChildCount() - 1);
                 delta = -Math.max(0, Math.min(dx, (child.getRight() - child.getLeft()) / 2 + child.getLeft() - parentCenter));
             }
+            if (mLastVisiblePos == getItemCount() - 1) {
+                Log.e("darkwh", "mLastVisiblePos");
+            }
         } else {
             //If we've reached the first item, enforce limits
             //如果到达第一个，强行限制delta
@@ -1075,12 +1078,19 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
                 child = getChildAt(0);
                 delta = -Math.min(0, Math.max(dx, ((child.getRight() - child.getLeft()) / 2 + child.getLeft()) - parentCenter));
             }
+            if (mFirstVisiblePosition == 0) {
+                Log.e("darkwh", "mFirstVisiblePosition");
+            }
         }
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "scrollHorizontallyBy: dx:" + dx + ",fixed:" + delta);
         }
         //记录从第一次layout之后的滑动距离
         getState().mScrollDelta += -delta;
+//        if (getState().mScrollDelta <= -500) {
+//            getState().mScrollDelta = -500;
+//            return 0;
+//        }
         //填充画面(重新layout子view)
         fillCover(recycler, state, -delta);
         //将所有view整体进行水平平移

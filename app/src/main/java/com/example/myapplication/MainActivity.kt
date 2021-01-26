@@ -33,9 +33,9 @@ class MainActivity : AppCompatActivity() {
         //...
         //setup adapter for your RecycleView
         rv_demo.setAdapter(mAdapter)
-        v_click.setOnClickListener {
-            rv_demo.smoothScrollToPosition(12)
-        }
+//        v_click.setOnClickListener {
+//            rv_demo.smoothScrollToPosition(12)
+//        }
         setMaxFlingVelocity(rv_demo)
     }
 
