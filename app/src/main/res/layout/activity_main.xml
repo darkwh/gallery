@@ -5,12 +5,14 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_demo"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_width="1100px"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:background="@color/colorTest"/>
 
     <View
         android:id="@+id/v_click"
-        android:layout_width="20px"
+        android:layout_width="40px"
         android:layout_height="match_parent"
         android:layout_centerHorizontal="true"
         android:alpha="0.3"

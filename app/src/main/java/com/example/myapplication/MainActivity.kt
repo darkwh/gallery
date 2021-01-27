@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
         val layoutManager = GalleryLayoutManager(GalleryLayoutManager.HORIZONTAL)
         //layoutManager.attach(mPagerRecycleView);  default selected position is 0
         //layoutManager.attach(mPagerRecycleView);  default selected position is 0
-        layoutManager.attach(rv_demo, 8)
+        layoutManager.attach(rv_demo, 12)
         //设置滑动缩放效果
 
         //设置滑动缩放效果
@@ -33,9 +33,9 @@ class MainActivity : AppCompatActivity() {
         //...
         //setup adapter for your RecycleView
         rv_demo.setAdapter(mAdapter)
-//        v_click.setOnClickListener {
-//            rv_demo.smoothScrollToPosition(12)
-//        }
+        v_click.setOnClickListener {
+            rv_demo.smoothScrollToPosition(12)
+        }
         setMaxFlingVelocity(rv_demo)
     }
 

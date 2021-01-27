@@ -16,11 +16,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class GalleryLayoutManager extends RecyclerView.LayoutManager implements RecyclerView.SmoothScroller.ScrollVectorProvider {
     //item间距
-    private int itemSpacing = 20;
+    private int itemSpacing = 40;
     //缩放的的View数量(应该是奇数)
     private int scaleCount = 5;
     //缩放系数
-    private float scaleRatio = 0.7f;
+    private float scaleRatio = 0.72f;
     //item原始宽
     private int mCenterItemWidth;
 
@@ -98,9 +98,81 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         }
     }
 
+    protected OrientationHelper mOrientationHelper;
+
+    protected int mDecoratedMeasurement;
+
+    private boolean mShouldReverseLayout = false;
+
+    void ensureLayoutState() {
+        if (mOrientationHelper == null) {
+            mOrientationHelper = OrientationHelper.createOrientationHelper(this, RecyclerView.HORIZONTAL);
+        }
+    }
+
     @Override
     public boolean checkLayoutParams(RecyclerView.LayoutParams lp) {
         return lp instanceof LayoutParams;
+    }
+
+    float getMaxOffset() {
+        //recyclerview中心点x坐标位置
+        int parentCenter = (getOrientationHelper().getEndAfterPadding() - getOrientationHelper().getStartAfterPadding()) / 2
+                + getOrientationHelper().getStartAfterPadding();
+        //确定recyclerview右边缘的位置
+        int rightEdge = getOrientationHelper().getEndAfterPadding();
+        int rightArea = rightEdge - parentCenter;
+        int scaleDistance = mCenterItemWidth / 2;
+        int minItemDistance = (int) (mCenterItemWidth * Math.pow(scaleRatio, (scaleCount - 1) / 2)) + itemSpacing;
+        for (int i = 0; i < (scaleCount - 1) / 2; i++) {
+            scaleDistance += itemSpacing + mCenterItemWidth * Math.pow(scaleRatio, i + 1);
+        }
+        int multiple = 0;
+        if (rightArea - scaleDistance > 0) {
+            multiple = (rightArea - scaleDistance) / minItemDistance;
+        }
+        int screenItemCount = (scaleCount - 1) / 2 + multiple;
+        int maxSelectedPosition;
+        if (getItemCount() - 1 - mInitialSelectedPosition >= screenItemCount) {
+            maxSelectedPosition = getItemCount() - 1 - screenItemCount;
+        } else {
+            if (mInitialSelectedPosition % screenItemCount == 0) {
+                maxSelectedPosition = getItemCount() - 1 - screenItemCount;
+            } else {
+                maxSelectedPosition = getItemCount() - 1 - mInitialSelectedPosition % screenItemCount - 1;
+            }
+        }
+        return (maxSelectedPosition - mInitialSelectedPosition) * (itemSpacing + mCenterItemWidth);
+    }
+
+    float getMinOffset() {
+        //recyclerview中心点x坐标位置
+        int parentCenter = (getOrientationHelper().getEndAfterPadding() - getOrientationHelper().getStartAfterPadding()) / 2
+                + getOrientationHelper().getStartAfterPadding();
+        //确定recyclerview左边缘的位置
+        int leftEdge = getOrientationHelper().getStartAfterPadding();
+        int leftArea = parentCenter - leftEdge;
+        int scaleDistance = mCenterItemWidth / 2;
+        int minItemDistance = (int) (mCenterItemWidth * Math.pow(scaleRatio, (scaleCount - 1) / 2)) + itemSpacing;
+        for (int i = 0; i < (scaleCount - 1) / 2; i++) {
+            scaleDistance += itemSpacing + mCenterItemWidth * Math.pow(scaleRatio, i + 1);
+        }
+        int multiple = 0;
+        if (leftArea - scaleDistance > 0) {
+            multiple = (leftArea - scaleDistance) / minItemDistance;
+        }
+        int screenItemCount = (scaleCount - 1) / 2 + multiple;
+        int minSelectedPosition;
+        if (mInitialSelectedPosition > screenItemCount) {
+            minSelectedPosition = screenItemCount;
+        } else {
+            if (mInitialSelectedPosition % screenItemCount == 0) {
+                minSelectedPosition = screenItemCount;
+            } else {
+                minSelectedPosition = mInitialSelectedPosition % screenItemCount + 1;
+            }
+        }
+        return (minSelectedPosition - mInitialSelectedPosition) * (itemSpacing + mCenterItemWidth);
     }
 
 
@@ -131,6 +203,8 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         //移除所有attach过的Views
         detachAndScrapAttachedViews(recycler);
         //首次填充画面
+        ensureLayoutState();
+
         firstFillCover(recycler, state, 0);
     }
 
@@ -180,6 +254,14 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         mInnerScrollListener.onScrolled(mRecyclerView, 0, 0);
     }
 
+    @Override
+    public void scrollToPosition(int position) {
+        if (!mInfinite && (position < 0 || position >= getItemCount())) return;
+        getState().mScrollDelta = mShouldReverseLayout ?
+                mInitialSelectedPosition * -(mDecoratedMeasurement + itemSpacing) : mInitialSelectedPosition * (mDecoratedMeasurement + itemSpacing);
+        requestLayout();
+    }
+
     /**
      * Layout the item view witch position specified by {@link GalleryLayoutManager#mInitialSelectedPosition} first and then layout the other
      *
@@ -208,6 +290,12 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         addView(scrap, 0);
         //测量子view
         measureChildWithMargins(scrap, 0, 0);
+        mDecoratedMeasurement = mOrientationHelper.getDecoratedMeasurement(scrap);
+//        if (mInitialSelectedPosition != NO_POSITION) {
+//            getState().mScrollDelta = mShouldReverseLayout ?
+//                    mInitialSelectedPosition * -(mDecoratedMeasurement+itemSpacing) : mInitialSelectedPosition * (mDecoratedMeasurement+itemSpacing);
+//        }
+        Log.d("KKKKKKKKK", "mDecoratedMeasurement===" + mDecoratedMeasurement);
         //获取测量后的宽
         scrapWidth = getDecoratedMeasuredWidth(scrap);
         mCenterItemWidth = scrapWidth;
@@ -432,22 +520,12 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         if (getItemCount() == 0) {
             return;
         }
-
         if (mOrientation == HORIZONTAL) {
 //            fillWithHorizontal(recycler, state, scrollDelta);
             fillHorizontalTest(recycler, state, getState().mScrollDelta);
         } else {
             fillWithVertical(recycler, state, scrollDelta);
         }
-
-
-//        if (mItemTransformer != null) {
-//            View child;
-//            for (int i = 0; i < getChildCount(); i++) {
-//                child = getChildAt(i);
-//                mItemTransformer.transformItem(this, child, calculateToCenterFraction(child, scrollDelta));
-//            }
-//        }
     }
 
     private float calculateToCenterFraction(View child, float pendingOffset) {
@@ -1031,7 +1109,7 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         int mScrollDelta;
 
         public State() {
-            mItemsFrames = new SparseArray<Rect>();
+            mItemsFrames = new SparseArray<>();
             mScrollDelta = 0;
         }
     }
@@ -1048,54 +1126,37 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         return mOrientation == VERTICAL;
     }
 
+    private boolean mInfinite = false;
+
+    protected float getDistanceRatio() {
+        return 1f;
+    }
 
     //横向滑动触发
     @Override
     public int scrollHorizontallyBy(int dx, RecyclerView.Recycler recycler, RecyclerView.State state) {
         // When dx is positive，finger fling from right to left(←)，scrollX+
-        //当dx是正数时，代表手指从右向左惯性滑动
         if (getChildCount() == 0 || dx == 0) {
             return 0;
         }
-        int delta = -dx;
-        //寻找中心点位置
-        int parentCenter = (getOrientationHelper().getEndAfterPadding() - getOrientationHelper().getStartAfterPadding()) / 2 + getOrientationHelper().getStartAfterPadding();
-        View child;
-        if (dx > 0) {
-            //If we've reached the last item, enforce limits
-            //如果到达最后一个，强行限制delta
-            if (getPosition(getChildAt(getChildCount() - 1)) == getItemCount() - 1) {
-                child = getChildAt(getChildCount() - 1);
-                delta = -Math.max(0, Math.min(dx, (child.getRight() - child.getLeft()) / 2 + child.getLeft() - parentCenter));
-            }
-            if (mLastVisiblePos == getItemCount() - 1) {
-                Log.e("darkwh", "mLastVisiblePos");
-            }
-        } else {
-            //If we've reached the first item, enforce limits
-            //如果到达第一个，强行限制delta
-            if (mFirstVisiblePosition == 0) {
-                child = getChildAt(0);
-                delta = -Math.min(0, Math.max(dx, ((child.getRight() - child.getLeft()) / 2 + child.getLeft()) - parentCenter));
-            }
-            if (mFirstVisiblePosition == 0) {
-                Log.e("darkwh", "mFirstVisiblePosition");
-            }
+        ensureLayoutState();
+        int willScroll = dx;
+
+        float realDx = dx / getDistanceRatio();
+        if (Math.abs(realDx) < 0.00000001f) {
+            return 0;
         }
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "scrollHorizontallyBy: dx:" + dx + ",fixed:" + delta);
+        float targetOffset = getState().mScrollDelta + realDx;
+        //handle the boundary
+        if (!mInfinite && targetOffset < getMinOffset()) {
+            willScroll -= (targetOffset - getMinOffset()) * getDistanceRatio();
+        } else if (!mInfinite && targetOffset > getMaxOffset()) {
+            willScroll = (int) ((getMaxOffset() - getState().mScrollDelta) * getDistanceRatio());
         }
-        //记录从第一次layout之后的滑动距离
-        getState().mScrollDelta += -delta;
-//        if (getState().mScrollDelta <= -500) {
-//            getState().mScrollDelta = -500;
-//            return 0;
-//        }
-        //填充画面(重新layout子view)
-        fillCover(recycler, state, -delta);
-        //将所有view整体进行水平平移
-        offsetChildrenHorizontal(delta);
-        return -delta;
+        realDx = willScroll / getDistanceRatio();
+        getState().mScrollDelta += realDx;
+        fillCover(recycler, state, 0);
+        return willScroll;
     }
 
     @Override
