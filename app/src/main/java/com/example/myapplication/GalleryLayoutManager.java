@@ -10,8 +10,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.recyclerview.widget.LinearSmoothScroller;
-import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.OrientationHelper;
+import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class GalleryLayoutManager extends RecyclerView.LayoutManager implements RecyclerView.SmoothScroller.ScrollVectorProvider {
@@ -23,6 +23,8 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
     private float scaleRatio = 0.72f;
     //item原始宽
     private int mCenterItemWidth;
+
+    private RecyclerView.Recycler mRecycler;
 
     private static final String TAG = "GalleryLayoutManager";
     final static int LAYOUT_START = -1;
@@ -45,11 +47,8 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
      */
     private State mState;
 
-    private LinearSnapHelper mSnapHelper = new LinearSnapHelper();
-
-    private InnerScrollListener mInnerScrollListener = new InnerScrollListener();
-
-    private boolean mCallbackInFling = false;
+    //    private CenterSnapHelper mSnapHelper = new CenterSnapHelper();
+    private PagerSnapHelper mSnapHelper = new PagerSnapHelper();
 
     /**
      * Current orientation. Either {@link #HORIZONTAL} or {@link #VERTICAL}
@@ -175,9 +174,30 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         return (minSelectedPosition - mInitialSelectedPosition) * (itemSpacing + mCenterItemWidth);
     }
 
+    /**
+     * 活的选中item距离中心点的偏移量
+     */
+    public int getOffsetToCenter() {
+        //TODO
+        if (mRecycler != null) {
+            //recyclerview中心点x坐标位置
+            int parentCenter = (getOrientationHelper().getEndAfterPadding() - getOrientationHelper().getStartAfterPadding()) / 2
+                    + getOrientationHelper().getStartAfterPadding();
+            View current = mRecycler.getViewForPosition(mCurSelectedPosition);
+            int currentRight = (int) (current.getRight() - (mCenterItemWidth * (1f - current.getScaleX()) / 2));
+            return parentCenter - currentRight;
+        } else {
+            Log.e("darkwh", "2222222222");
+        }
+        return 0;
+    }
+
 
     @Override
     public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
+        if (mRecycler == null) {
+            mRecycler = recycler;
+        }
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "onLayoutChildren() called with: state = [" + state + "]");
         }
@@ -241,25 +261,8 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "firstFillCover finish:first: " + mFirstVisiblePosition + ",last:" + mLastVisiblePos);
         }
-        //执行每个Item的放大转换逻辑
-//        if (mItemTransformer != null) {
-//            View child;
-//            for (int i = 0; i < getChildCount(); i++) {
-//                child = getChildAt(i);
-//                mItemTransformer.transformItem(this, child, calculateToCenterFraction(child, scrollDelta));
-//            }
-//        }
         //首次填充后主动调用一次Scrolled
         mCurSelectedPosition = mInitialSelectedPosition;
-        mInnerScrollListener.onScrolled(mRecyclerView, 0, 0);
-    }
-
-    @Override
-    public void scrollToPosition(int position) {
-        if (!mInfinite && (position < 0 || position >= getItemCount())) return;
-        getState().mScrollDelta = mShouldReverseLayout ?
-                mInitialSelectedPosition * -(mDecoratedMeasurement + itemSpacing) : mInitialSelectedPosition * (mDecoratedMeasurement + itemSpacing);
-        requestLayout();
     }
 
     /**
@@ -291,11 +294,6 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         //测量子view
         measureChildWithMargins(scrap, 0, 0);
         mDecoratedMeasurement = mOrientationHelper.getDecoratedMeasurement(scrap);
-//        if (mInitialSelectedPosition != NO_POSITION) {
-//            getState().mScrollDelta = mShouldReverseLayout ?
-//                    mInitialSelectedPosition * -(mDecoratedMeasurement+itemSpacing) : mInitialSelectedPosition * (mDecoratedMeasurement+itemSpacing);
-//        }
-        Log.d("KKKKKKKKK", "mDecoratedMeasurement===" + mDecoratedMeasurement);
         //获取测量后的宽
         scrapWidth = getDecoratedMeasuredWidth(scrap);
         mCenterItemWidth = scrapWidth;
@@ -678,7 +676,8 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
     private void fillHorizontalTest(RecyclerView.Recycler recycler, RecyclerView.State state, int dx) {
         detachAndScrapAttachedViews(recycler);
         //recyclerview中心点x坐标位置
-        int parentCenter = (getOrientationHelper().getEndAfterPadding() - getOrientationHelper().getStartAfterPadding()) / 2 + getOrientationHelper().getStartAfterPadding();
+        int parentCenter = (getOrientationHelper().getEndAfterPadding() - getOrientationHelper().getStartAfterPadding()) / 2
+                + getOrientationHelper().getStartAfterPadding();
         //确定recyclerview左边缘的位置
         int leftEdge = getOrientationHelper().getStartAfterPadding();
         //确定recyclerview右边缘的位置
@@ -687,8 +686,6 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         int offetOneFromCenter = mCenterItemWidth + itemSpacing;
         //根据mCurSelectedPosition先绘制中间item(中间item此时可能也处于偏移状态)
         int offsetDx = Math.abs(dx) % offetOneFromCenter;
-
-
         int topOffset;
         int scrapWidth, scrapHeight;
         int height = getVerticalSpace();
@@ -1135,13 +1132,15 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
     //横向滑动触发
     @Override
     public int scrollHorizontallyBy(int dx, RecyclerView.Recycler recycler, RecyclerView.State state) {
+        if (mRecycler == null) {
+            mRecycler = recycler;
+        }
         // When dx is positive，finger fling from right to left(←)，scrollX+
         if (getChildCount() == 0 || dx == 0) {
             return 0;
         }
         ensureLayoutState();
         int willScroll = dx;
-
         float realDx = dx / getDistanceRatio();
         if (Math.abs(realDx) < 0.00000001f) {
             return 0;
@@ -1263,17 +1262,21 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
      */
     public interface OnItemSelectedListener {
         /**
-         * @param recyclerView The RecyclerView which item view belong to.
-         * @param item         The current selected view
-         * @param position     The current selected view's position
+         * @param position The current selected view's position
          */
-        void onItemSelected(RecyclerView recyclerView, View item, int position);
+        void onItemSelected(int position);
+
+        void onPageScrollStateChanged(int state);
     }
 
     private OnItemSelectedListener mOnItemSelectedListener;
 
     public void setOnItemSelectedListener(OnItemSelectedListener onItemSelectedListener) {
         mOnItemSelectedListener = onItemSelectedListener;
+    }
+
+    public OnItemSelectedListener getOnItemSelectedListener() {
+        return mOnItemSelectedListener;
     }
 
     public void attach(RecyclerView recyclerView) {
@@ -1292,96 +1295,21 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         mInitialSelectedPosition = Math.max(0, selectedPosition);
         recyclerView.setLayoutManager(this);
 //        mSnapHelper.attachToRecyclerView(recyclerView);
-        recyclerView.addOnScrollListener(mInnerScrollListener);
     }
 
     RecyclerView mRecyclerView;
 
-
-    public void setCallbackInFling(boolean callbackInFling) {
-        mCallbackInFling = callbackInFling;
-    }
-
-    /**
-     * Inner Listener to listen for changes to the selected item
-     *
-     * @author chensuilun
-     */
-    private class InnerScrollListener extends RecyclerView.OnScrollListener {
-        int mState;
-        boolean mCallbackOnIdle;
-
-        @Override
-        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-            super.onScrolled(recyclerView, dx, dy);
-//            View snap = mSnapHelper.findSnapView(recyclerView.getLayoutManager());
-//            if (snap != null) {
-//                int selectedPosition = recyclerView.getLayoutManager().getPosition(snap);
-//                Log.e("darkwh", "onScrolled  selectedPosition is ----->" + selectedPosition);
-//                if (selectedPosition != mCurSelectedPosition) {
-//                    if (mCurSelectedView != null) {
-//                        mCurSelectedView.setSelected(false);
-//                    }
-//                    mCurSelectedView = snap;
-//                    mCurSelectedView.setSelected(true);
-//                    mCurSelectedPosition = selectedPosition;
-//                    Log.e("darkwh", "onScrolled   mCurSelectedPosition is" + mCurSelectedPosition);
-//                    if (!mCallbackInFling && mState != SCROLL_STATE_IDLE) {
-//                        if (BuildConfig.DEBUG) {
-//                            Log.v(TAG, "ignore selection change callback when fling ");
-//                        }
-//                        mCallbackOnIdle = true;
-//                        return;
-//                    }
-//                    if (mOnItemSelectedListener != null) {
-//                        mOnItemSelectedListener.onItemSelected(recyclerView, snap, mCurSelectedPosition);
-//                    }
-//                }
-//            }
-//            if (BuildConfig.DEBUG) {
-//                Log.v(TAG, "onScrolled: dx:" + dx + ",dy:" + dy);
-//            }
-        }
-
-        @Override
-        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-            super.onScrollStateChanged(recyclerView, newState);
-//            mState = newState;
-//            if (BuildConfig.DEBUG) {
-//                Log.v(TAG, "onScrollStateChanged: " + newState);
-//            }
-//            if (mState == SCROLL_STATE_IDLE) {
-//                View snap = mSnapHelper.findSnapView(recyclerView.getLayoutManager());
-//                if (snap != null) {
-//                    int selectedPosition = recyclerView.getLayoutManager().getPosition(snap);
-//                    if (selectedPosition != mCurSelectedPosition) {
-//                        if (mCurSelectedView != null) {
-//                            mCurSelectedView.setSelected(false);
-//                        }
-//                        mCurSelectedView = snap;
-//                        mCurSelectedView.setSelected(true);
-//                        mCurSelectedPosition = selectedPosition;
-//                        Log.e("darkwh", "onScrollStateChanged   mCurSelectedPosition is" + mCurSelectedPosition);
-//                        if (mOnItemSelectedListener != null) {
-//                            mOnItemSelectedListener.onItemSelected(recyclerView, snap, mCurSelectedPosition);
-//                        }
-//                    } else if (!mCallbackInFling && mOnItemSelectedListener != null && mCallbackOnIdle) {
-//                        mCallbackOnIdle = false;
-//                        mOnItemSelectedListener.onItemSelected(recyclerView, snap, mCurSelectedPosition);
-//                    }
-//                } else {
-//                    Log.e(TAG, "onScrollStateChanged: snap null");
-//                }
-//            }
-        }
-    }
-
-
     @Override
     public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state, int position) {
+        //TODO 需要重写
         GallerySmoothScroller linearSmoothScroller = new GallerySmoothScroller(recyclerView.getContext());
         linearSmoothScroller.setTargetPosition(position);
         startSmoothScroll(linearSmoothScroller);
+    }
+
+    @Override
+    public void scrollToPosition(int position) {
+        //TODO 需要重写
     }
 
     /**
