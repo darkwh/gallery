@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import android.os.Bundle
+import android.os.Handler
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -21,9 +22,9 @@ class MainActivity : AppCompatActivity() {
 
         mAdapter = DemoAdapter()
         val layoutManager = GalleryLayoutManager(GalleryLayoutManager.HORIZONTAL)
-        layoutManager.attach(rv_demo, 12)
+        layoutManager.attach(rv_demo, 2)
         //setup adapter for your RecycleView
-        mSnapHelper.attachToRecyclerView(rv_demo)
+//        mSnapHelper.attachToRecyclerView(rv_demo)
         rv_demo.setAdapter(mAdapter)
         rv_demo.setOnScrollListener(object : RecyclerView.OnScrollListener() {
             private var currentPage = -1
@@ -33,6 +34,7 @@ class MainActivity : AppCompatActivity() {
                     val currentPageIndex: Int = layoutManager.getPosition(snapView)
                     if (currentPage != currentPageIndex) { //防止重复提示
                         currentPage = currentPageIndex
+//                        layoutManager.mCurSelectedPosition=currentPageIndex
                         Toast.makeText(
                             this@MainActivity,
                             "当前是第" + currentPageIndex + "页",
@@ -44,8 +46,9 @@ class MainActivity : AppCompatActivity() {
         })
 
         v_click.setOnClickListener {
-            rv_demo.smoothScrollToPosition(14)
+            rv_demo.smoothScrollToPosition(17)
         }
+        Handler().postDelayed({rv_demo.smoothScrollToPosition(4)},5000)
         setMaxFlingVelocity(rv_demo)
     }
 

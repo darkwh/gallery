@@ -8,6 +8,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Interpolator;
 
 import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.OrientationHelper;
@@ -142,6 +143,21 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
             }
         }
         return (maxSelectedPosition - mInitialSelectedPosition) * (itemSpacing + mCenterItemWidth);
+    }
+
+    public int getOffsetToPosition(int position) {
+
+        int scale= (int) Math.pow(scaleRatio, (scaleCount - 1) / 2);
+        int minItemDistance = mCenterItemWidth * scale;
+        int pos = position - mCurSelectedPosition;
+        Log.d("KKKKKKKKKKKK", "mCurSelectedPosition===" + mCurSelectedPosition);
+
+        Log.d("KKKKKKKKKKKK", "minItemDistance===" + minItemDistance);
+        Log.d("KKKKKKKKKKKK", "position===" + pos);
+        int itemSpace=pos*itemSpacing;
+        int scrollBy=(int) (mCenterItemWidth+mCenterItemWidth*0.72f+mCenterItemWidth*0.28f+mCenterItemWidth*(1-scale)*(pos-2)+minItemDistance*pos+itemSpace);
+        Log.d("KKKKKKKKKKKK", "scrollBy===" + scrollBy);
+        return scrollBy;
     }
 
     float getMinOffset() {
@@ -1298,14 +1314,22 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
     }
 
     RecyclerView mRecyclerView;
+    private Interpolator mSmoothScrollInterpolator;
+
+    public void setSmoothScrollInterpolator(Interpolator smoothScrollInterpolator) {
+        this.mSmoothScrollInterpolator = smoothScrollInterpolator;
+    }
 
     @Override
     public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state, int position) {
+
+        recyclerView.smoothScrollBy(getOffsetToPosition(position), 0, mSmoothScrollInterpolator);
         //TODO 需要重写
-        GallerySmoothScroller linearSmoothScroller = new GallerySmoothScroller(recyclerView.getContext());
-        linearSmoothScroller.setTargetPosition(position);
-        startSmoothScroll(linearSmoothScroller);
+//        GallerySmoothScroller linearSmoothScroller = new GallerySmoothScroller(recyclerView.getContext());
+//        linearSmoothScroller.setTargetPosition(position);
+//        startSmoothScroll(linearSmoothScroller);
     }
+
 
     @Override
     public void scrollToPosition(int position) {
