@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         val layoutManager = GalleryLayoutManager(GalleryLayoutManager.HORIZONTAL)
         layoutManager.attach(rv_demo, 2)
         //setup adapter for your RecycleView
-//        mSnapHelper.attachToRecyclerView(rv_demo)
+        mSnapHelper.attachToRecyclerView(rv_demo)
         rv_demo.setAdapter(mAdapter)
         rv_demo.setOnScrollListener(object : RecyclerView.OnScrollListener() {
             private var currentPage = -1
@@ -46,9 +46,10 @@ class MainActivity : AppCompatActivity() {
         })
 
         v_click.setOnClickListener {
-            rv_demo.smoothScrollToPosition(17)
+//            rv_demo.smoothScrollToPosition(17)
+            rv_demo.scrollToPosition(17)
         }
-        Handler().postDelayed({rv_demo.smoothScrollToPosition(4)},5000)
+//        Handler().postDelayed({rv_demo.smoothScrollToPosition(4)},5000)
         setMaxFlingVelocity(rv_demo)
     }
 

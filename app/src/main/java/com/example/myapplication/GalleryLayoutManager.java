@@ -305,6 +305,8 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         int topOffset;
         //layout the init position view
         View scrap = recycler.getViewForPosition(mInitialSelectedPosition);
+        scrap.setScaleX(1f);
+        scrap.setScaleY(1f);
         //添加初始化时设置的选中item(即中间的item)
         addView(scrap, 0);
         //测量子view
@@ -1334,6 +1336,24 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
     @Override
     public void scrollToPosition(int position) {
         //TODO 需要重写
+        mInitialSelectedPosition = Math.min(Math.max(0, mInitialSelectedPosition), getItemCount() - 1);
+        mFirstVisiblePosition = mInitialSelectedPosition;
+        mLastVisiblePos = mInitialSelectedPosition;
+        mCurSelectedPosition = -1;
+        getState().mScrollDelta = 0;
+        if (mCurSelectedView != null) {
+            mCurSelectedView.setSelected(false);
+            mCurSelectedView = null;
+        }
+
+        //设置首次选中item的位置
+        mInitialSelectedPosition = Math.min(Math.max(0, position), getItemCount() - 1);
+        //移除所有attach过的Views
+        detachAndScrapAttachedViews(mRecycler);
+        //首次填充画面
+        ensureLayoutState();
+
+        firstFillCover(mRecycler, null, 0);
     }
 
     /**
