@@ -22,8 +22,8 @@ class MainActivity : AppCompatActivity() {
         rv_demo.adapter = mAdapter
 
         v_click.setOnClickListener {
-//            rv_demo.smoothScrollToPosition(17)
-            rv_demo.scrollToPosition(17)
+            rv_demo.smoothScrollToPosition(17)
+//            rv_demo.scrollToPosition(17)
         }
         layoutManager.setOnItemSelectedListener(object :
             GalleryLayoutManager.OnItemSelectedListener {

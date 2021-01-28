@@ -76,11 +76,11 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
         mOrientation = orientation;
     }
 
-    public GalleryLayoutManager(int itemSpacing, int scaleCount, float scaleRatio, int mOrientation) {
+    public GalleryLayoutManager(int itemSpacing, int scaleCount, float scaleRatio) {
         this.itemSpacing = itemSpacing;
         this.scaleCount = scaleCount;
         this.scaleRatio = scaleRatio;
-        this.mOrientation = mOrientation;
+        this.mOrientation = HORIZONTAL;
     }
 
     public void attach(RecyclerView recyclerView, int selectedPosition) {
@@ -231,15 +231,16 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
     }
 
     public int getOffsetToPosition(int position) {
+        View snapView = mSnapHelper.findSnapView(GalleryLayoutManager.this);
+        int currentIndex = 0;
+        if (snapView != null) {
+            currentIndex = GalleryLayoutManager.this.getPosition(snapView);
+        }
         int scale = (int) Math.pow(scaleRatio, (scaleCount - 1) >> 1);
         int minItemDistance = mCenterItemWidth * scale;
-        int pos = position - mCurSelectedPosition;
-        Log.d(TAG, "mCurSelectedPosition=" + mCurSelectedPosition);
-        Log.d(TAG, "minItemDistance=" + minItemDistance);
-        Log.d(TAG, "position=" + pos);
+        int pos = position - currentIndex;
         int itemSpace = pos * itemSpacing;
         int scrollBy = (int) (mCenterItemWidth + mCenterItemWidth * 0.72f + mCenterItemWidth * 0.28f + mCenterItemWidth * (1 - scale) * (pos - 2) + minItemDistance * pos + itemSpace);
-        Log.d(TAG, "scrollBy=" + scrollBy);
         return scrollBy;
     }
 
@@ -1107,8 +1108,6 @@ public class GalleryLayoutManager extends RecyclerView.LayoutManager implements 
          * @param position The current selected view's position
          */
         void onItemSelected(int position);
-
-        void onPageScrollStateChanged(int state);
     }
 
     private OnItemSelectedListener mOnItemSelectedListener;
