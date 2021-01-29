@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
+import com.darkwh.gallery.GalleryLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
 import java.lang.reflect.Field
 
@@ -25,15 +26,12 @@ class MainActivity : AppCompatActivity() {
             rv_demo.smoothScrollToPosition(17)
 //            rv_demo.scrollToPosition(17)
         }
-        layoutManager.setOnItemSelectedListener(object :
-            GalleryLayoutManager.OnItemSelectedListener {
-            override fun onItemSelected(position: Int) {
-                Log.d("MainActivity", "onItemSelected position=$position")
-            }
-
-            override fun onPageScrollStateChanged(state: Int) {
-            }
-        })
+        layoutManager.setOnItemSelectedListener { position ->
+            Log.d(
+                "MainActivity",
+                "onItemSelected position=$position"
+            )
+        }
         setMaxFlingVelocity(rv_demo)
     }
 
