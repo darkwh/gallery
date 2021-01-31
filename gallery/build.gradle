@@ -1,6 +1,9 @@
 plugins {
     id 'com.android.library'
     id 'kotlin-android'
+    id 'kotlin-android-extensions'
+    id 'kotlin-kapt'
+    id 'com.novoda.bintray-release'
 }
 
 android {
@@ -30,10 +33,10 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
 }
 
 dependencies {
-
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.core:core-ktx:1.2.0'
     implementation 'androidx.appcompat:appcompat:1.1.0'
@@ -41,4 +44,24 @@ dependencies {
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+}
+
+def siteUrl = 'https://github.com/darkwh/gallery'
+publish {
+    repoName = 'BaiyuMaven'//远程仓库名字,不指明，默认是上传到maven
+    userOrg = 'baiyu0502'//bintray.com的用户名
+    groupId = 'com.darkwh'//jcenter上的路径
+    artifactId = 'equidistant-gallerylayoutmanager'//项目名称
+    publishVersion = '1.0.0'//版本号
+    desc = '等间距画廊'//描述，不重要
+    website = siteUrl//项目主页
+}
+tasks.withType(Javadoc) {//防止编码问题
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.addStringOption('encoding', 'UTF-8')
+    options.addStringOption('charSet', 'UTF-8')
+}
+task androidJavadocs(type: Javadoc) {
+    failOnError false // add this line
+    source = android.sourceSets.main.java.getSrcDirs()
 }

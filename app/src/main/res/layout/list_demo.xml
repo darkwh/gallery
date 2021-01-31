@@ -3,11 +3,13 @@
     android:layout_width="250px"
     android:layout_height="250px"
     android:background="@color/colorPrimary">
+
     <TextView
         android:id="@+id/item_id"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center"
         android:textColor="@android:color/white"
-        android:text="123456789012345678901234567890"/>
+        android:textSize="30sp" />
 
 </RelativeLayout>
